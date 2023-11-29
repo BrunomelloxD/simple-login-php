@@ -69,6 +69,17 @@ class UserModel implements UserRepository
             $stmt->execute();
             $response = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            if (!$response) {
+                $data = [
+                    'code' => 404,
+                    'response' => [
+                        'code' => 404,
+                        'message' => 'User not found',
+                    ],
+                ];
+                return $data;
+            }
+
             $data = [
                 'code' => 200,
                 'response' => $response,
