@@ -2,11 +2,14 @@
 
 namespace App\Repositories;
 
+use Exception;
+
 interface UserRepository
 {
-    public function create($params);
-    public function getUser($params);
-    public function getAll($params);
-    public function delete($params);
-    public function login($params);
+    public function create($params): array | Exception;
+    public function getUser($params): array | Exception;
+    public function getAll($params): array | Exception;
+    public function login($params): array | Exception;
+    public function delete($params): array | Exception;
+    public function update($params): array | Exception;
 }

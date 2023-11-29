@@ -97,7 +97,7 @@ class UserModel implements UserRepository
         try {
             $email = $params->email;
 
-            $auth = $this->authMiddleware->handle($email);
+            $auth = $this->authMiddleware->handleCheckPermissionAdmin($email);
 
             if (!$auth) {
                 $data = [
@@ -199,15 +199,28 @@ class UserModel implements UserRepository
         try {
             $email = $params->email;
             $user_id = $params->user_id;
+            $token = $params->auth_token;
 
-            $auth = $this->authMiddleware->handle($email);
+            $auth = $this->authMiddleware->handleCheckPermissionAdmin($email);
+            $validateToken = $this->authMiddleware->handleValidateLoginToken($email, $token);
+
+            if (!$validateToken) {
+                $data = [
+                    'code' => 401,
+                    'response' => [
+                        'code' => 401,
+                        'message' => 'Token expired',
+                    ],
+                ];
+                return $data;
+            }
 
             if (!$auth) {
                 $data = [
                     'code' => 401,
                     'response' => [
                         'code' => 401,
-                        'message' => 'Unauthorized',
+                        'message' => 'User not authorized',
                     ],
                 ];
                 return $data;
@@ -219,7 +232,7 @@ class UserModel implements UserRepository
             $stmt->execute();
             $user = $stmt->fetch();
 
-            // User not found in database or not the same user
+            // User not found in database or is not same user
             if ($email === $user['email'] || !$user) {
                 $data = [
                     'code' => 401,
@@ -246,6 +259,36 @@ class UserModel implements UserRepository
 
             return $data;
         } catch (\Throwable $th) {
+            echo $th->getMessage();
+            throw new \RuntimeException('Error:', 0, $th);
+        }
+    }
+
+    public function update($params): array | Exception
+    {
+        try {
+            $user_id = $params->user_id;
+            $username = $params->name;
+            $email = $params->email;
+
+            $sql = "UPDATE users SET username = :username, email = :email WHERE id = :user_id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':username', $username);
+            $stmt->bindValue(':email', $email);
+            $stmt->bindValue(':user_id', $user_id);
+            $stmt->execute();
+
+            $data = [
+                'code' => 200,
+                'response' => [
+                    'code' => 200,
+                    'message' => 'User updated successfully!',
+                ],
+            ];
+
+            return $data;
+        } catch (\Throwable $th) {
+            echo $th->getMessage();
             throw new \RuntimeException('Error:', 0, $th);
         }
     }

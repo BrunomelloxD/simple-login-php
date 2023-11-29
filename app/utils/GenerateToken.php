@@ -7,7 +7,9 @@ class GenerateToken
     public static function handle($time)
     {
         try {
-            $token = bin2hex(openssl_random_pseudo_bytes(16));
+            $saltRound = $_ENV['SALT_ROUND'];
+
+            $token = bin2hex(openssl_random_pseudo_bytes($saltRound));
             $currentDate = date('Y-m-d H:i:s');
             $tokenTime = date('Y-m-d H:i:s', strtotime($currentDate . ' + ' . $time . ' hours'));
 

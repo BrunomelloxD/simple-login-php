@@ -4,7 +4,7 @@ namespace app\views;
 
 class Response
 {
-    public static function json($data)
+    public static function json($data): void
     {
         ['response' => $data, 'code' => $code] = $data;
 

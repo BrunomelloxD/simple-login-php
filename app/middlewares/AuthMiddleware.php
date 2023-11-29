@@ -14,7 +14,7 @@ class AuthMiddleware
         $this->pdo = $pdo;
     }
 
-    public function handle($email): bool | Exception
+    public function handleCheckPermissionAdmin($email): bool | Exception
     {
         try {
             $sql = "SELECT roles.id
@@ -31,6 +31,39 @@ class AuthMiddleware
             if ($response['id'] === 1) {
                 return true;
             }
+
+            return false;
+        } catch (\Throwable $th) {
+            echo $th->getMessage();
+            throw new \RuntimeException('Error:', 0, $th);
+        }
+    }
+
+    public function handleValidateLoginToken($email, $token): bool | Exception
+    {
+        try {
+            $sql = "SELECT login_token_expires_at FROM users WHERE email = :email AND login_token = :token";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':email', $email);
+            $stmt->bindValue(':token', $token);
+            $stmt->execute();
+            $response = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!isset($response['login_token_expires_at'])) {
+                return false;
+            }
+
+            $loginTokenExpiresAt = $response['login_token_expires_at'];
+            $currentDate = date('Y-m-d H:i:s');
+
+            if ($loginTokenExpiresAt > $currentDate) {
+                return true;
+            }
+
+            $sql = "UPDATE users SET login_token_expires_at = NULL, login_token = NULL WHERE email = :email";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':email', $email);
+            $stmt->execute();
 
             return false;
         } catch (\Throwable $th) {

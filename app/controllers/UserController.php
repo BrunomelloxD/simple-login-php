@@ -81,4 +81,16 @@ class UserController
             throw new \RuntimeException($th);
         }
     }
+
+    public function update(object $params)
+    {
+        try {
+            $data = $this->userModel->update($params);
+
+            return Response::json($data);
+        } catch (\Throwable $th) {
+            echo $th->getMessage();
+            throw new \RuntimeException($th);
+        }
+    }
 }
