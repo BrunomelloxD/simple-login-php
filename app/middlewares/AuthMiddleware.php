@@ -39,24 +39,26 @@ class AuthMiddleware
         }
     }
 
-    public function handleValidateLoginToken($email, $token): bool | Exception
+    public function handleValidateLoginToken($email, $userToken): bool | Exception
     {
         try {
-            $sql = "SELECT login_token_expires_at FROM users WHERE email = :email AND login_token = :token";
+            $sql = "SELECT * FROM users WHERE email = :email AND login_token = :token";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':email', $email);
-            $stmt->bindValue(':token', $token);
+            $stmt->bindValue(':token', $userToken);
             $stmt->execute();
             $response = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!isset($response['login_token_expires_at'])) {
+            $loginTokenExpiresAt = $response['login_token_expires_at'];
+            $token = $response['login_token'];
+
+            if (!$token) {
                 return false;
             }
 
-            $loginTokenExpiresAt = $response['login_token_expires_at'];
             $currentDate = date('Y-m-d H:i:s');
 
-            if ($loginTokenExpiresAt > $currentDate) {
+            if ($loginTokenExpiresAt >= $currentDate) {
                 return true;
             }
 

@@ -96,8 +96,21 @@ class UserModel implements UserRepository
     {
         try {
             $email = $params->email;
+            $token = $params->auth_token;
 
             $auth = $this->authMiddleware->handleCheckPermissionAdmin($email);
+            $validateToken = $this->authMiddleware->handleValidateLoginToken($email, $token);
+
+            if (!$validateToken) {
+                $data = [
+                    'code' => 401,
+                    'response' => [
+                        'code' => 401,
+                        'message' => 'Token expired',
+                    ],
+                ];
+                return $data;
+            }
 
             if (!$auth) {
                 $data = [
